@@ -1,0 +1,41 @@
+/* src/styles.css */
+
+:root {
+  --primary-color: #C04000;
+  --secondary-color: #fffbe6;
+  --text-light: #ffffff;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--secondary-color);
+  margin: 0;
+}
+
+.navbar-custom {
+  background-color: var(--primary-color) !important;
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link,
+.navbar-custom .dropdown-toggle {
+  color: var(--text-light) !important;
+}
+
+.navbar-custom .nav-link:hover {
+  color: #ffd9b3 !important;
+}
+
+.footer-custom {
+  background-color: #C04000;
+  color: white;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+.dashboard-card:hover {
+  transform: scale(1.03);
+  transition: transform 0.2s;
+  background-color: #fff3e6;
+}
