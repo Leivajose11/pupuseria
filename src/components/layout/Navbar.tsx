@@ -12,7 +12,8 @@ import {
   FaUser,
   FaSignOutAlt,
   FaKey,
-  FaShieldAlt
+  FaShieldAlt,
+  FaUtensils
 } from 'react-icons/fa';
 
 export default function AppNavbar() {
@@ -31,12 +32,13 @@ export default function AppNavbar() {
         <Navbar.Collapse id="navbar-nav">
           <Nav className="me-auto">
             <Nav.Link as={Link} to="/"><FaHome className="me-1" />Inicio</Nav.Link>
-            <Nav.Link as={Link} to="/inventario"><FaBoxOpen className="me-1" />Inventario</Nav.Link>
             <Nav.Link as={Link} to="/caja"><FaCashRegister className="me-1" />Caja</Nav.Link>
+            <Nav.Link as={Link} to="/menu"><FaUtensils className="me-1" />Menú</Nav.Link>
+            <Nav.Link as={Link} to="/bebidas"><FaGlassCheers className="me-1" />Bebidas</Nav.Link>
+            <Nav.Link as={Link} to="/inventario"><FaBoxOpen className="me-1" />Inventario</Nav.Link>
+            <Nav.Link as={Link} to="/proveedores"><FaTruck className="me-1" />Proveedores</Nav.Link>
             <Nav.Link as={Link} to="/empleados"><FaUsers className="me-1" />Empleados</Nav.Link>
             <Nav.Link as={Link} to="/reportes"><FaChartBar className="me-1" />Reportes</Nav.Link>
-            <Nav.Link as={Link} to="/proveedores"><FaTruck className="me-1" />Proveedores</Nav.Link>
-            <Nav.Link as={Link} to="/bebidas"><FaGlassCheers className="me-1" />Control Bebidas</Nav.Link>
 
             <NavDropdown title={<><FaCog className="me-1" />Configuración</>} id="configuracion-dropdown">
               <NavDropdown.Item as={Link} to="/configuracion/accesos">

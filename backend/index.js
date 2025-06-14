@@ -1,19 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const port = 4000;
 
-app.use(cors()); // Esto es lo que permite conexiones externas
-
+// Middlewares
+app.use(cors());
 app.use(express.json());
 
-app.get('/api/dashboard', (req, res) => {
-  res.json({
-    ventasDelDia: 250.75,
-    productoMasVendido: "Pupusa de Queso",
-    empleadosActivos: 5
-  });
-});
+// Rutas
+const menuRoutes = require('./routes/menu'); // Ya lo tienes
+const categoriasRoutes = require('./routes/categorias'); // <--- ESTE DEBES AGREGARLO
 
-app.listen(4000, () => {
-  console.log('Servidor backend corriendo en http://localhost:4000');
+app.use('/api/menu', menuRoutes);
+app.use('/api/categorias', categoriasRoutes); // <--- Y ESTE TAMBIÉN
+
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`Servidor corriendo en http://localhost:${port}`);
 });
