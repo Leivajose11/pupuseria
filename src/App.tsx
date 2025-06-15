@@ -13,7 +13,8 @@ import Bebidas from './pages/Bebidas';
 import Configuracion from './pages/Configuracion';
 import Perfil from './pages/Perfil';
 import Logout from './pages/Logout';
-import Menu from './pages/Menu'; // ← Agregado
+import Menu from './pages/Menu';
+import Login from './pages/Login'; // ← ¡Nueva importación!
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/menu" element={<Menu />} />
+          <Route path="/login" element={<Login />} /> {/* ← Ruta agregada */}
         </Routes>
       </main>
       <Footer />

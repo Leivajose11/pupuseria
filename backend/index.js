@@ -8,13 +8,14 @@ app.use(cors());
 app.use(express.json());
 
 // Rutas
-const menuRoutes = require('./routes/menu'); // Ya lo tienes
-const categoriasRoutes = require('./routes/categorias'); // <--- ESTE DEBES AGREGARLO
+const menuRoutes = require('./routes/menu');
+const categoriasRoutes = require('./routes/categorias');
+const authRoutes = require('./routes/auth');
 
 app.use('/api/menu', menuRoutes);
-app.use('/api/categorias', categoriasRoutes); // <--- Y ESTE TAMBIÉN
+app.use('/api/categorias', categoriasRoutes);
+app.use('/api/auth', authRoutes);
 
-// Iniciar servidor
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
