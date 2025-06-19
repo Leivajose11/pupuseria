@@ -1,5 +1,5 @@
 import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FaHome,
   FaBoxOpen,
@@ -13,10 +13,22 @@ import {
   FaSignOutAlt,
   FaKey,
   FaShieldAlt,
-  FaUtensils
+  FaUtensils,
+  FaClipboardList,
+  FaMoneyBillWave
 } from 'react-icons/fa';
 
 export default function AppNavbar() {
+  const navigate = useNavigate();
+  const rol = sessionStorage.getItem('rol');
+  const nombre = sessionStorage.getItem('nombre');
+  const logueado = sessionStorage.getItem('logueado') === 'true';
+
+  const cerrarSesion = () => {
+    sessionStorage.clear();
+    navigate('/login');
+  };
+
   return (
     <Navbar className="navbar-custom" expand="lg" fixed="top">
       <Container>
@@ -31,32 +43,69 @@ export default function AppNavbar() {
         <Navbar.Toggle aria-controls="navbar-nav" />
         <Navbar.Collapse id="navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/"><FaHome className="me-1" />Inicio</Nav.Link>
-            <Nav.Link as={Link} to="/caja"><FaCashRegister className="me-1" />Caja</Nav.Link>
-            <Nav.Link as={Link} to="/menu"><FaUtensils className="me-1" />Menú</Nav.Link>
-            <Nav.Link as={Link} to="/bebidas"><FaGlassCheers className="me-1" />Bebidas</Nav.Link>
-            <Nav.Link as={Link} to="/inventario"><FaBoxOpen className="me-1" />Inventario</Nav.Link>
-            <Nav.Link as={Link} to="/proveedores"><FaTruck className="me-1" />Proveedores</Nav.Link>
-            <Nav.Link as={Link} to="/empleados"><FaUsers className="me-1" />Empleados</Nav.Link>
-            <Nav.Link as={Link} to="/reportes"><FaChartBar className="me-1" />Reportes</Nav.Link>
+            {logueado && (
+              <>
+                <Nav.Link as={Link} to="/"><FaHome className="me-1" />Inicio</Nav.Link>
 
-            <NavDropdown title={<><FaCog className="me-1" />Configuración</>} id="configuracion-dropdown">
-              <NavDropdown.Item as={Link} to="/configuracion/accesos">
-                <FaKey className="me-2" />Accesos por roles
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/configuracion/seguridad">
-                <FaShieldAlt className="me-2" />Seguridad / Respaldo
-              </NavDropdown.Item>
-            </NavDropdown>
+                {(rol === 'Administrador' || rol === 'Cajero') && (
+                  <Nav.Link as={Link} to="/caja"><FaCashRegister className="me-1" />Caja</Nav.Link>
+                )}
+
+                <Nav.Link as={Link} to="/menu"><FaUtensils className="me-1" />Menú</Nav.Link>
+
+                {(rol !== 'Cocinero') && (
+                  <Nav.Link as={Link} to="/bebidas"><FaGlassCheers className="me-1" />Bebidas</Nav.Link>
+                )}
+
+                <Nav.Link as={Link} to="/inventario"><FaBoxOpen className="me-1" />Inventario</Nav.Link>
+
+                {(rol === 'Administrador' || rol === 'Cajero') && (
+                  <Nav.Link as={Link} to="/proveedores"><FaTruck className="me-1" />Proveedores</Nav.Link>
+                )}
+
+                {(rol === 'Administrador') && (
+                  <>
+                    <Nav.Link as={Link} to="/empleados"><FaUsers className="me-1" />Empleados</Nav.Link>
+                    <Nav.Link as={Link} to="/reportes"><FaChartBar className="me-1" />Reportes</Nav.Link>
+                    <Nav.Link as={Link} to="/gastos"><FaMoneyBillWave className="me-1" />Gastos</Nav.Link>
+                  </>
+                )}
+
+                {(rol === 'Administrador' || rol === 'Cajero' || rol === 'Cocinero' || rol === 'Mesero') && (
+                  <Nav.Link as={Link} to="/ordenes"><FaClipboardList className="me-1" />Órdenes</Nav.Link>
+                )}
+
+                {rol === 'Administrador' && (
+                  <NavDropdown title={<><FaCog className="me-1" />Configuración</>} id="configuracion-dropdown">
+                    <NavDropdown.Item as={Link} to="/Register">
+                      <FaKey className="me-2" />Registro y roles
+                    </NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/configuracion/seguridad">
+                      <FaShieldAlt className="me-2" />Seguridad / Respaldo
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                )}
+              </>  //C:\Users\Leiva\pupuseria\src\pages\Register.tsx
+            )}
           </Nav>
 
-          <Nav>
-            <NavDropdown title={<><FaUser className="me-1" />Usuario</>} id="usuario-dropdown" align="end">
-              <NavDropdown.Item as={Link} to="/perfil"><FaUser className="me-2" />Mi perfil</NavDropdown.Item>
-              <NavDropdown.Divider />
-              <NavDropdown.Item as={Link} to="/logout"><FaSignOutAlt className="me-2" />Cerrar sesión</NavDropdown.Item>
-            </NavDropdown>
-          </Nav>
+          {logueado && (
+            <Nav>
+              <NavDropdown
+                title={<><FaUser className="me-1" />{nombre || 'Usuario'}</>}
+                id="usuario-dropdown"
+                align="end"
+              >
+                <NavDropdown.Item as={Link} to="/perfil">
+                  <FaUser className="me-2" />Mi perfil
+                </NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item onClick={cerrarSesion}>
+                  <FaSignOutAlt className="me-2" />Cerrar sesión
+                </NavDropdown.Item>
+              </NavDropdown>
+            </Nav>
+          )}
         </Navbar.Collapse>
       </Container>
     </Navbar>

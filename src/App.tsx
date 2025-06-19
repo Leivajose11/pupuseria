@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
-import AppNavbar from './components/layout/Navbar';
+//import AppNavbar from './components/layout/Navbar';
+import AppNavbar from "./components/layout/Navbar";
+
 import Footer from './components/layout/Footer';
 
 // Páginas
@@ -15,6 +17,8 @@ import Perfil from './pages/Perfil';
 import Logout from './pages/Logout';
 import Menu from './pages/Menu';
 import Login from './pages/Login'; // ← ¡Nueva importación!
+import Register from './pages/Register'; // ← ¡Nueva importación!
+
 
 export default function App() {
   return (
@@ -34,6 +38,8 @@ export default function App() {
           <Route path="/logout" element={<Logout />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/login" element={<Login />} /> {/* ← Ruta agregada */}
+          <Route path="/register" element={<Register />} />
+
         </Routes>
       </main>
       <Footer />

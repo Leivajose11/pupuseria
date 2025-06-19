@@ -8,14 +8,15 @@ app.use(cors());
 app.use(express.json());
 
 // Rutas
-const menuRoutes = require('./routes/menu');
-const categoriasRoutes = require('./routes/categorias');
 const authRoutes = require('./routes/auth');
+const menuRoutes = require('./routes/menu');         // <- AÑADIDO
+const categoriasRoutes = require('./routes/categorias'); // <- AÑADIDO
 
-app.use('/api/menu', menuRoutes);
-app.use('/api/categorias', categoriasRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/menu', menuRoutes);                    // <- AÑADIDO
+app.use('/api/categorias', categoriasRoutes);        // <- AÑADIDO
 
+// Iniciar servidor
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });

@@ -1,11 +1,12 @@
-// src/pages/Login.tsx
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const manejarLogin = async () => {
     try {
@@ -14,13 +15,16 @@ export default function Login() {
         password,
       });
 
-      console.log('Respuesta del backend:', respuesta.data);
+      const data = respuesta.data;
 
-      if (respuesta.data && respuesta.data.rol) {
-        localStorage.setItem('logueado', 'true');
-        localStorage.setItem('rol', respuesta.data.rol);
-        window.location.href = '/empleados'; // o dashboard
-      } else {
+      if (data?.rol && data?.nombre && data?.id) {
+  sessionStorage.setItem('logueado', 'true');
+  sessionStorage.setItem('rol', data.rol);
+  sessionStorage.setItem('nombre', data.nombre);
+  sessionStorage.setItem('usuarioId', data.id.toString());
+  navigate('/');
+}
+ else {
         setError('Respuesta inesperada del servidor');
       }
     } catch (err) {

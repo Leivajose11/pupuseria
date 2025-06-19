@@ -1,23 +1,26 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Empleados() {
+  const navigate = useNavigate();
+  const rol = localStorage.getItem('rol');
+
   useEffect(() => {
     const logueado = localStorage.getItem('logueado');
-    
-    // Si no está logueado, redirigir a login
-    if (!logueado) {
-      window.location.href = '/login';
+    if (logueado !== 'true') {
+      navigate('/login');
     }
-  }, []);
-
-  const rol = localStorage.getItem('rol');
+  }, [navigate]);
 
   return (
     <div className="container mt-4">
       <h2>Página de Empleados</h2>
 
-      {rol === 'Administrador' && <p>Contenido exclusivo para administradores</p>}
-      {rol !== 'Administrador' && <p>No tienes permiso para ver esta sección.</p>}
+      {rol === 'Administrador' ? (
+        <p>Contenido exclusivo para administradores</p>
+      ) : (
+        <p className="text-danger">No tienes permiso para ver esta sección.</p>
+      )}
     </div>
   );
 }

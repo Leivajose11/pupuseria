@@ -32,6 +32,8 @@ export default function Menu() {
   const [errores, setErrores] = useState<{ [key: string]: string }>({});
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'danger'; texto: string } | null>(null);
 
+  const rol = localStorage.getItem('rol');
+
   useEffect(() => {
     cargarMenu();
     cargarCategorias();
@@ -135,16 +137,11 @@ export default function Menu() {
     .sort((a, b) => {
       const dir = ordenAscendente ? 1 : -1;
       switch (ordenColumna) {
-        case 'nombre':
-          return a.nombre.localeCompare(b.nombre) * dir;
-        case 'precio':
-          return (a.precio - b.precio) * dir;
-        case 'disponible':
-          return (Number(a.disponible) - Number(b.disponible)) * dir;
-        case 'categoria':
-          return a.categoria.localeCompare(b.categoria) * dir;
-        default:
-          return 0;
+        case 'nombre': return a.nombre.localeCompare(b.nombre) * dir;
+        case 'precio': return (a.precio - b.precio) * dir;
+        case 'disponible': return (Number(a.disponible) - Number(b.disponible)) * dir;
+        case 'categoria': return a.categoria.localeCompare(b.categoria) * dir;
+        default: return 0;
       }
     });
 
@@ -181,9 +178,11 @@ export default function Menu() {
           </Form.Select>
         </Col>
         <Col md={4} className="text-end">
-          <Button variant="success" onClick={() => abrirModal()}>
-            ➕ Nuevo Producto
-          </Button>
+          {rol === 'Administrador' && (
+            <Button variant="success" onClick={() => abrirModal()}>
+              ➕ Nuevo Producto
+            </Button>
+          )}
         </Col>
       </Row>
 
@@ -195,7 +194,7 @@ export default function Menu() {
             <th onClick={() => ordenar('precio')} style={{ cursor: 'pointer' }}>Precio</th>
             <th onClick={() => ordenar('disponible')} style={{ cursor: 'pointer' }}>Disponible</th>
             <th onClick={() => ordenar('categoria')} style={{ cursor: 'pointer' }}>Categoría</th>
-            <th>Acciones</th>
+            {rol === 'Administrador' && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
@@ -206,14 +205,16 @@ export default function Menu() {
               <td>L. {item.precio.toFixed(2)}</td>
               <td className="text-center">{item.disponible ? '✅' : '❌'}</td>
               <td>{item.categoria}</td>
-              <td>
-                <Button size="sm" variant="warning" className="me-2" onClick={() => abrirModal(item)}>
-                  ✏️ Editar
-                </Button>
-                <Button size="sm" variant="danger" onClick={() => handleEliminar(item)}>
-                  🗑️ Eliminar
-                </Button>
-              </td>
+              {rol === 'Administrador' && (
+                <td>
+                  <Button size="sm" variant="warning" className="me-2" onClick={() => abrirModal(item)}>
+                    ✏️ Editar
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => handleEliminar(item)}>
+                    🗑️ Eliminar
+                  </Button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
