@@ -15,7 +15,11 @@ import {
   FaShieldAlt,
   FaUtensils,
   FaClipboardList,
-  FaMoneyBillWave
+  FaMoneyBillWave,
+  FaTools,
+  FaCogs,
+  FaUserShield,
+  FaClipboardCheck
 } from 'react-icons/fa';
 
 export default function AppNavbar() {
@@ -48,7 +52,10 @@ export default function AppNavbar() {
                 <Nav.Link as={Link} to="/"><FaHome className="me-1" />Inicio</Nav.Link>
 
                 {(rol === 'Administrador' || rol === 'Cajero') && (
-                  <Nav.Link as={Link} to="/caja"><FaCashRegister className="me-1" />Caja</Nav.Link>
+                  <>
+                    <Nav.Link as={Link} to="/caja"><FaCashRegister className="me-1" />Caja</Nav.Link>
+                    <Nav.Link as={Link} to="/gastos"><FaMoneyBillWave className="me-1" />Gastos</Nav.Link>
+                  </>
                 )}
 
                 <Nav.Link as={Link} to="/menu"><FaUtensils className="me-1" />Menú</Nav.Link>
@@ -59,33 +66,38 @@ export default function AppNavbar() {
 
                 <Nav.Link as={Link} to="/inventario"><FaBoxOpen className="me-1" />Inventario</Nav.Link>
 
-                {(rol === 'Administrador' || rol === 'Cajero') && (
-                  <Nav.Link as={Link} to="/proveedores"><FaTruck className="me-1" />Proveedores</Nav.Link>
-                )}
-
-                {(rol === 'Administrador') && (
-                  <>
-                    <Nav.Link as={Link} to="/empleados"><FaUsers className="me-1" />Empleados</Nav.Link>
-                    <Nav.Link as={Link} to="/reportes"><FaChartBar className="me-1" />Reportes</Nav.Link>
-                    <Nav.Link as={Link} to="/gastos"><FaMoneyBillWave className="me-1" />Gastos</Nav.Link>
-                  </>
-                )}
-
                 {(rol === 'Administrador' || rol === 'Cajero' || rol === 'Cocinero' || rol === 'Mesero') && (
-                  <Nav.Link as={Link} to="/ordenes"><FaClipboardList className="me-1" />Órdenes</Nav.Link>
+                  <Nav.Link as={Link} to="/ordenes"><FaClipboardCheck className="me-1" />Órdenes</Nav.Link>
                 )}
 
                 {rol === 'Administrador' && (
-                  <NavDropdown title={<><FaCog className="me-1" />Configuración</>} id="configuracion-dropdown">
-                    <NavDropdown.Item as={Link} to="/Register">
-                      <FaKey className="me-2" />Registro y roles
-                    </NavDropdown.Item>
-                    <NavDropdown.Item as={Link} to="/configuracion/seguridad">
-                      <FaShieldAlt className="me-2" />Seguridad / Respaldo
-                    </NavDropdown.Item>
-                  </NavDropdown>
+                  <>
+                    <NavDropdown title={<><FaTools className="me-1" />Admin</>} id="admin-dropdown">
+                      <NavDropdown.Item as={Link} to="/empleados">
+                        <FaUsers className="me-2" />Empleados
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/reportes">
+                        <FaChartBar className="me-2" />Reportes
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/proveedores">
+                        <FaTruck className="me-2" />Proveedores
+                      </NavDropdown.Item>
+                    </NavDropdown>
+
+                    <NavDropdown title={<><FaCogs className="me-1" />Configuración</>} id="configuracion-dropdown">
+                      <NavDropdown.Item as={Link} to="/Register">
+                        <FaUserShield className="me-2" />Usuarios y Roles
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/configuracion/seguridad">
+                        <FaShieldAlt className="me-2" />Seguridad / Respaldo
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/auditoria">
+                        <FaClipboardList className="me-2" />Auditoría
+                      </NavDropdown.Item>
+                    </NavDropdown>
+                  </>
                 )}
-              </>  //C:\Users\Leiva\pupuseria\src\pages\Register.tsx
+              </>
             )}
           </Nav>
 

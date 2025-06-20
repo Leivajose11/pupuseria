@@ -14,7 +14,7 @@ router.post('/login', async (req, res) => {
     const result = await pool.request()
       .input('usuario', sql.VarChar, usuario)
       .query(`
-       SELECT u.id, u.nombre, u.password, r.nombre AS rol
+        SELECT u.id, u.nombre, u.password, r.nombre AS rol
         FROM Usuarios u
         JOIN Roles r ON u.idRol = r.id
         WHERE u.usuario = @usuario AND u.activo = 1
@@ -31,12 +31,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
     }
 
-   res.json({
-  id: usuarioData.id,
-  nombre: usuarioData.nombre,
-  rol: usuarioData.rol
-});
-
+    res.json({
+      id: usuarioData.id,
+      nombre: usuarioData.nombre,
+      rol: usuarioData.rol
+    });
 
   } catch (err) {
     console.error('Error en login:', err);
@@ -52,17 +51,20 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const pool = await sql.connect(config);
 
-    await pool.request()
+    const result = await pool.request()
       .input('nombre', sql.VarChar, nombre)
       .input('usuario', sql.VarChar, usuario)
       .input('password', sql.VarChar, hashedPassword)
       .input('idRol', sql.Int, idRol)
       .query(`
         INSERT INTO Usuarios (nombre, usuario, password, idRol, activo, fechaRegistro)
+        OUTPUT INSERTED.id
         VALUES (@nombre, @usuario, @password, @idRol, 1, GETDATE())
       `);
 
-    await registrarLog(usuarioResponsableId, 'CREAR_USUARIO', 'Usuarios', `Usuario ${nombre} creado con rol ${idRol}`);
+    const nuevoId = result.recordset[0].id;
+
+    await registrarLog(usuarioResponsableId, 'CREAR_USUARIO', 'Usuarios', nuevoId, `Usuario '${nombre}' creado con rol ID ${idRol}`);
 
     res.status(201).json({ mensaje: 'Usuario registrado con éxito' });
 
@@ -118,7 +120,7 @@ router.put('/usuarios/:id', async (req, res) => {
       `);
     }
 
-    await registrarLog(usuarioResponsableId, 'EDITAR_USUARIO', 'Usuarios', `Usuario ${id} actualizado`);
+    await registrarLog(usuarioResponsableId, 'EDITAR_USUARIO', 'Usuarios', parseInt(id), `Usuario editado: ${nombre}`);
 
     res.json({ mensaje: 'Usuario actualizado' });
 
@@ -139,7 +141,7 @@ router.delete('/usuarios/:id', async (req, res) => {
       .input('id', sql.Int, id)
       .query('DELETE FROM Usuarios WHERE id = @id');
 
-    await registrarLog(usuarioResponsableId, 'ELIMINAR_USUARIO', 'Usuarios', `Usuario ${id} eliminado permanentemente`);
+    await registrarLog(usuarioResponsableId, 'ELIMINAR_USUARIO', 'Usuarios', parseInt(id), `Usuario ID ${id} eliminado permanentemente`);
 
     res.json({ mensaje: 'Usuario eliminado permanentemente' });
 
@@ -152,14 +154,15 @@ router.delete('/usuarios/:id', async (req, res) => {
 // DESACTIVAR USUARIO
 router.patch('/usuarios/:id/desactivar', async (req, res) => {
   const { usuarioResponsableId } = req.body;
+  const { id } = req.params;
 
   try {
     const pool = await sql.connect(config);
     await pool.request()
-      .input('id', sql.Int, req.params.id)
+      .input('id', sql.Int, id)
       .query('UPDATE Usuarios SET activo = 0 WHERE id = @id');
 
-    await registrarLog(usuarioResponsableId, 'DESACTIVAR_USUARIO', 'Usuarios', `Usuario ${req.params.id} desactivado`);
+    await registrarLog(usuarioResponsableId, 'DESACTIVAR_USUARIO', 'Usuarios', parseInt(id), `Usuario desactivado`);
 
     res.json({ mensaje: 'Usuario desactivado' });
 
@@ -172,14 +175,15 @@ router.patch('/usuarios/:id/desactivar', async (req, res) => {
 // REACTIVAR USUARIO
 router.patch('/usuarios/:id/activar', async (req, res) => {
   const { usuarioResponsableId } = req.body;
+  const { id } = req.params;
 
   try {
     const pool = await sql.connect(config);
     await pool.request()
-      .input('id', sql.Int, req.params.id)
+      .input('id', sql.Int, id)
       .query('UPDATE Usuarios SET activo = 1 WHERE id = @id');
 
-    await registrarLog(usuarioResponsableId, 'REACTIVAR_USUARIO', 'Usuarios', `Usuario ${req.params.id} reactivado`);
+    await registrarLog(usuarioResponsableId, 'REACTIVAR_USUARIO', 'Usuarios', parseInt(id), `Usuario reactivado`);
 
     res.json({ mensaje: 'Usuario activado' });
 
@@ -189,7 +193,7 @@ router.patch('/usuarios/:id/activar', async (req, res) => {
   }
 });
 
-// OBTENER TODOS LOS ROLES
+// OBTENER ROLES
 router.get('/roles', async (req, res) => {
   try {
     const pool = await sql.connect(config);

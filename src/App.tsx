@@ -18,6 +18,10 @@ import Logout from './pages/Logout';
 import Menu from './pages/Menu';
 import Login from './pages/Login'; // ← ¡Nueva importación!
 import Register from './pages/Register'; // ← ¡Nueva importación!
+import Auditoria from './pages/Auditoria';
+
+// Dentro del <Routes>
+
 
 
 export default function App() {
@@ -39,6 +43,7 @@ export default function App() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/login" element={<Login />} /> {/* ← Ruta agregada */}
           <Route path="/register" element={<Register />} />
+          <Route path="/auditoria" element={<Auditoria />} />
 
         </Routes>
       </main>

@@ -1,21 +1,21 @@
-// backend/utils/logger.js
 const sql = require('mssql');
 const config = require('../dbConfig');
 
-async function registrarLog(usuarioResponsableId, accion, modulo, descripcion) {
+async function registrarLog(usuarioResponsableId, accion, entidad, entidadId, detalles) {
   try {
     const pool = await sql.connect(config);
     await pool.request()
       .input('usuarioResponsableId', sql.Int, usuarioResponsableId)
       .input('accion', sql.VarChar, accion)
-      .input('modulo', sql.VarChar, modulo)
-      .input('descripcion', sql.VarChar, descripcion)
+      .input('entidad', sql.VarChar, entidad)
+      .input('entidadId', sql.Int, entidadId)
+      .input('detalles', sql.VarChar, detalles)
       .query(`
-        INSERT INTO LogAuditoria (usuarioResponsableId, accion, modulo, descripcion, fechaHora)
-        VALUES (@usuarioResponsableId, @accion, @modulo, @descripcion, GETDATE())
+        INSERT INTO LogsAuditoria (usuarioResponsableId, accion, entidad, entidadId, detalles, fecha)
+        VALUES (@usuarioResponsableId, @accion, @entidad, @entidadId, @detalles, GETDATE())
       `);
-  } catch (err) {
-    console.error('Error al registrar en log de auditoría:', err);
+  } catch (error) {
+    console.error('Error al registrar log de auditoría:', error);
   }
 }
 
