@@ -1,7 +1,8 @@
+// src/pages/Login.tsx
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
+import { Form, Button, Alert, Card } from 'react-bootstrap';
 import logo from '../assets/Logo.png';
 
 export default function Login() {
@@ -19,11 +20,14 @@ export default function Login() {
 
       const data = respuesta.data;
 
-      if (data?.rol && data?.nombre && data?.id) {
+      if (data?.token && data?.rol && data?.nombre && data?.id) {
+        // ✅ Guardar token en sessionStorage
+        sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('logueado', 'true');
         sessionStorage.setItem('rol', data.rol);
         sessionStorage.setItem('nombre', data.nombre);
         sessionStorage.setItem('usuarioId', data.id.toString());
+
         navigate('/');
       } else {
         setError('Respuesta inesperada del servidor');

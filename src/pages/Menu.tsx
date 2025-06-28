@@ -1,5 +1,6 @@
+// src/pages/Menu.tsx
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig'; // usa token desde sessionStorage automáticamente
 import { Table, Form, Button, Modal, Row, Col, Alert } from 'react-bootstrap';
 
 interface Producto {
@@ -32,7 +33,8 @@ export default function Menu() {
   const [errores, setErrores] = useState<{ [key: string]: string }>({});
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'danger'; texto: string } | null>(null);
 
-  const rol = localStorage.getItem('rol');
+  const rol = (sessionStorage.getItem('rol') || '').toLowerCase();
+  const esAdmin = rol === 'administrador';
 
   useEffect(() => {
     cargarMenu();
@@ -41,7 +43,7 @@ export default function Menu() {
 
   const cargarMenu = async () => {
     try {
-      const res = await axios.get('http://localhost:4000/api/menu');
+      const res = await axios.get('/menu');
       setMenu(res.data);
     } catch {
       mostrarMensaje('danger', 'Error al cargar el menú');
@@ -50,7 +52,7 @@ export default function Menu() {
 
   const cargarCategorias = async () => {
     try {
-      const res = await axios.get('http://localhost:4000/api/categorias');
+      const res = await axios.get('/categorias');
       setCategorias(res.data);
     } catch {
       mostrarMensaje('danger', 'Error al cargar categorías');
@@ -58,21 +60,16 @@ export default function Menu() {
   };
 
   const abrirModal = (producto?: Producto) => {
-    if (producto) {
-      setFormData(producto);
-      setModoEdicion(true);
-    } else {
-      setFormData({ disponible: true });
-      setModoEdicion(false);
-    }
+    setModoEdicion(!!producto);
+    setFormData(producto || { disponible: true });
     setErrores({});
     setShowModal(true);
   };
 
   const validar = () => {
     const err: { [key: string]: string } = {};
-    if (!formData.nombre || formData.nombre.trim() === '') err.nombre = 'Nombre es requerido';
-    if (!formData.descripcion || formData.descripcion.trim() === '') err.descripcion = 'Descripción es requerida';
+    if (!formData.nombre?.trim()) err.nombre = 'Nombre es requerido';
+    if (!formData.descripcion?.trim()) err.descripcion = 'Descripción es requerida';
     if (formData.precio === undefined || isNaN(Number(formData.precio))) err.precio = 'Precio inválido';
     if (!formData.idCategoria) err.idCategoria = 'Seleccione una categoría';
     setErrores(err);
@@ -81,19 +78,19 @@ export default function Menu() {
 
   const guardarProducto = async () => {
     if (!validar()) return;
-
     try {
       if (modoEdicion && formData.id) {
-        await axios.put(`http://localhost:4000/api/menu/${formData.id}`, formData);
+        await axios.put(`/menu/${formData.id}`, formData);
         mostrarMensaje('success', 'Producto actualizado correctamente');
       } else {
-        await axios.post('http://localhost:4000/api/menu', formData);
+        await axios.post('/menu', formData);
         mostrarMensaje('success', 'Producto agregado correctamente');
       }
       setShowModal(false);
       cargarMenu();
-    } catch {
-      mostrarMensaje('danger', 'Error al guardar el producto');
+    } catch (error: any) {
+      const mensaje = error?.response?.data?.mensaje || 'Error al guardar el producto';
+      mostrarMensaje('danger', mensaje);
     }
   };
 
@@ -103,15 +100,15 @@ export default function Menu() {
   };
 
   const confirmarEliminar = async () => {
-    if (toDelete) {
-      try {
-        await axios.delete(`http://localhost:4000/api/menu/${toDelete.id}`);
-        setShowConfirm(false);
-        mostrarMensaje('success', 'Producto eliminado correctamente');
-        cargarMenu();
-      } catch {
-        mostrarMensaje('danger', 'Error al eliminar el producto');
-      }
+    if (!toDelete) return;
+    try {
+      await axios.delete(`/menu/${toDelete.id}`);
+      setShowConfirm(false);
+      mostrarMensaje('success', 'Producto eliminado correctamente');
+      cargarMenu();
+    } catch (error: any) {
+      const mensaje = error?.response?.data?.mensaje || 'Error al eliminar el producto';
+      mostrarMensaje('danger', mensaje);
     }
   };
 
@@ -178,7 +175,7 @@ export default function Menu() {
           </Form.Select>
         </Col>
         <Col md={4} className="text-end">
-          {rol === 'Administrador' && (
+          {esAdmin && (
             <Button variant="success" onClick={() => abrirModal()}>
               ➕ Nuevo Producto
             </Button>
@@ -194,7 +191,7 @@ export default function Menu() {
             <th onClick={() => ordenar('precio')} style={{ cursor: 'pointer' }}>Precio</th>
             <th onClick={() => ordenar('disponible')} style={{ cursor: 'pointer' }}>Disponible</th>
             <th onClick={() => ordenar('categoria')} style={{ cursor: 'pointer' }}>Categoría</th>
-            {rol === 'Administrador' && <th>Acciones</th>}
+            {esAdmin && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
@@ -205,7 +202,7 @@ export default function Menu() {
               <td>L. {item.precio.toFixed(2)}</td>
               <td className="text-center">{item.disponible ? '✅' : '❌'}</td>
               <td>{item.categoria}</td>
-              {rol === 'Administrador' && (
+              {esAdmin && (
                 <td>
                   <Button size="sm" variant="warning" className="me-2" onClick={() => abrirModal(item)}>
                     ✏️ Editar
@@ -220,7 +217,6 @@ export default function Menu() {
         </tbody>
       </Table>
 
-      {/* Modal Confirmar Eliminación */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Confirmar eliminación</Modal.Title>
@@ -232,7 +228,6 @@ export default function Menu() {
         </Modal.Footer>
       </Modal>
 
-      {/* Modal Formulario */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>{modoEdicion ? 'Editar producto' : 'Nuevo producto'}</Modal.Title>

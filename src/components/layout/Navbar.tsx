@@ -21,6 +21,7 @@ import {
   FaUserShield,
   FaClipboardCheck
 } from 'react-icons/fa';
+import { FaPerson } from 'react-icons/fa6';
 
 export default function AppNavbar() {
   const navigate = useNavigate();
@@ -76,11 +77,14 @@ export default function AppNavbar() {
                       <NavDropdown.Item as={Link} to="/empleados">
                         <FaUsers className="me-2" />Empleados
                       </NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/reportes">
-                        <FaChartBar className="me-2" />Reportes
+                      <NavDropdown.Item as={Link} to="/clientes">
+                        <FaPerson className="me-2" />Clientes
                       </NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/proveedores">
                         <FaTruck className="me-2" />Proveedores
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/reportes">
+                        <FaChartBar className="me-2" />Reportes
                       </NavDropdown.Item>
                     </NavDropdown>
 
@@ -88,7 +92,7 @@ export default function AppNavbar() {
                       <NavDropdown.Item as={Link} to="/Register">
                         <FaUserShield className="me-2" />Usuarios y Roles
                       </NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/configuracion/seguridad">
+                      <NavDropdown.Item as={Link} to="/seguridad">
                         <FaShieldAlt className="me-2" />Seguridad / Respaldo
                       </NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/auditoria">

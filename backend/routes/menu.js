@@ -1,62 +1,61 @@
 const express = require('express');
+const sql = require('mssql');
 const router = express.Router();
-const { sql, poolPromise } = require('../db');
+const config = require('../dbConfig');
+const verifyToken = require('../middlewares/verificarToken');
+const verificarRol = require('../middlewares/verificarRol');
 
-// Obtener todos los productos con nombre de categoría
+// OBTENER MENÚ COMPLETO (acceso libre)
 router.get('/', async (req, res) => {
   try {
-    const pool = await poolPromise;
+    const pool = await sql.connect(config);
     const result = await pool.request().query(`
-      SELECT m.*, c.nombre AS categoria
+      SELECT m.id, m.nombre, m.descripcion, m.precio, m.disponible, 
+             m.idCategoria, c.nombre AS categoria
       FROM Menu m
       JOIN CategoriaMenu c ON m.idCategoria = c.id
     `);
     res.json(result.recordset);
-  } catch (error) {
-    console.error('❌ GET error:', error);
-    res.status(500).json({ error: 'Error al obtener productos' });
+  } catch (err) {
+    console.error('Error al obtener menú:', err);
+    res.status(500).json({ mensaje: 'Error al obtener menú' });
   }
 });
 
-// Agregar un nuevo producto
-router.post('/', async (req, res) => {
+// CREAR producto (solo ADMIN)
+router.post('/', verifyToken, verificarRol('administrador'), async (req, res) => {
   const { nombre, descripcion, precio, disponible, idCategoria } = req.body;
-  if (!nombre || !descripcion || precio === undefined || idCategoria === undefined) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
-
   try {
-    const pool = await poolPromise;
+    const pool = await sql.connect(config);
     await pool.request()
-      .input('nombre', sql.NVarChar, nombre)
-      .input('descripcion', sql.NVarChar, descripcion)
+      .input('nombre', sql.VarChar, nombre)
+      .input('descripcion', sql.VarChar, descripcion)
       .input('precio', sql.Decimal(10, 2), precio)
-      .input('disponible', sql.Bit, disponible ? 1 : 0)
+      .input('disponible', sql.Bit, disponible)
       .input('idCategoria', sql.Int, idCategoria)
       .query(`
         INSERT INTO Menu (nombre, descripcion, precio, disponible, idCategoria)
         VALUES (@nombre, @descripcion, @precio, @disponible, @idCategoria)
       `);
-    res.status(201).json({ message: 'Producto agregado' });
-  } catch (error) {
-    console.error('❌ POST error:', error);
-    res.status(500).json({ error: 'Error al guardar producto' });
+    res.status(201).json({ mensaje: 'Producto creado' });
+  } catch (err) {
+    console.error('Error al crear producto:', err);
+    res.status(500).json({ mensaje: 'Error al crear producto' });
   }
 });
 
-// Actualizar un producto
-router.put('/:id', async (req, res) => {
+// ACTUALIZAR producto (solo ADMIN)
+router.put('/:id', verifyToken, verificarRol('administrador'), async (req, res) => {
   const { id } = req.params;
   const { nombre, descripcion, precio, disponible, idCategoria } = req.body;
-
   try {
-    const pool = await poolPromise;
+    const pool = await sql.connect(config);
     await pool.request()
       .input('id', sql.Int, id)
-      .input('nombre', sql.NVarChar, nombre)
-      .input('descripcion', sql.NVarChar, descripcion)
+      .input('nombre', sql.VarChar, nombre)
+      .input('descripcion', sql.VarChar, descripcion)
       .input('precio', sql.Decimal(10, 2), precio)
-      .input('disponible', sql.Bit, disponible ? 1 : 0)
+      .input('disponible', sql.Bit, disponible)
       .input('idCategoria', sql.Int, idCategoria)
       .query(`
         UPDATE Menu
@@ -67,26 +66,25 @@ router.put('/:id', async (req, res) => {
             idCategoria = @idCategoria
         WHERE id = @id
       `);
-    res.json({ message: 'Producto actualizado' });
-  } catch (error) {
-    console.error('❌ PUT error:', error);
-    res.status(500).json({ error: 'Error al actualizar producto' });
+    res.json({ mensaje: 'Producto actualizado' });
+  } catch (err) {
+    console.error('Error al actualizar producto:', err);
+    res.status(500).json({ mensaje: 'Error al actualizar producto' });
   }
 });
 
-// Eliminar un producto
-router.delete('/:id', async (req, res) => {
+// ELIMINAR producto (solo ADMIN)
+router.delete('/:id', verifyToken, verificarRol('administrador'), async (req, res) => {
   const { id } = req.params;
-
   try {
-    const pool = await poolPromise;
+    const pool = await sql.connect(config);
     await pool.request()
       .input('id', sql.Int, id)
-      .query(`DELETE FROM Menu WHERE id = @id`);
-    res.json({ message: 'Producto eliminado' });
-  } catch (error) {
-    console.error('❌ DELETE error:', error);
-    res.status(500).json({ error: 'Error al eliminar producto' });
+      .query('DELETE FROM Menu WHERE id = @id');
+    res.json({ mensaje: 'Producto eliminado' });
+  } catch (err) {
+    console.error('Error al eliminar producto:', err);
+    res.status(500).json({ mensaje: 'Error al eliminar producto' });
   }
 });
 

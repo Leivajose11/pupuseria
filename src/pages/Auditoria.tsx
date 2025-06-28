@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+// (No cambies este archivo, ya lo tienes bien)
+import { useEffect, useState, useCallback } from 'react';
+import axios from '../axiosConfig';
 import { Table, Form, Row, Col, Button } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -9,11 +10,11 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface Log {
-  usuarioResponsable: string;
+  usuarioResponsable: string; 
   accion: string;
-  tablaAfectada: string;
-  detalle: string;
-  fecha: string;
+  tablaAfectada: string; 
+  detalle: string;     
+  fecha: string;       // Ahora vendrá como "YYYY-MM-DDTHH:mm:ss"
 }
 
 export default function Auditoria() {
@@ -26,18 +27,31 @@ export default function Auditoria() {
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 10;
 
-  useEffect(() => {
-    obtenerLogs();
-  }, []);
-
-  const obtenerLogs = async () => {
+  const obtenerLogs = useCallback(async () => {
     try {
       const res = await axios.get('http://localhost:4000/api/logs/logs');
       setLogs(res.data);
-    } catch {
-      console.error('Error al obtener logs');
+    } catch (error) {
+      console.error('Error al obtener logs:', error);
+      setLogs([]);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    obtenerLogs();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        obtenerLogs();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [obtenerLogs]);
 
   const manejarOrden = (col: keyof Log) => {
     if (col === columnaOrden) {
@@ -49,15 +63,32 @@ export default function Auditoria() {
   };
 
   const logsFiltrados = logs.filter(log => {
-    const texto = busqueda.toLowerCase();
-    const fechaLog = new Date(log.fecha);
-    const desdeOK = !fechaInicio || fechaLog >= fechaInicio;
-    const hastaOK = !fechaFin || fechaLog < new Date(fechaFin.getTime() + 24 * 60 * 60 * 1000);
-    const coincide =
-      log.usuarioResponsable.toLowerCase().includes(texto) ||
-      log.accion.toLowerCase().includes(texto) ||
-      log.tablaAfectada.toLowerCase().includes(texto);
-    return desdeOK && hastaOK && coincide;
+    const fechaLog = new Date(log.fecha); 
+
+    const textoBusqueda = busqueda.toLowerCase();
+
+    // Aquí, al usar Date.UTC, se crean fechas UTC para comparar.
+    // Si fechaLog es ahora una fecha LOCAL, la comparación podría no ser precisa
+    // a través de medianoches si la diferencia de zona horaria es grande.
+    // Sin embargo, para fechas completas (día entero), esto suele funcionar.
+    // Si persistiera el problema con filtros de fecha, podríamos ajustar esto.
+    const inicioComparacion = fechaInicio 
+      ? new Date(Date.UTC(fechaInicio.getFullYear(), fechaInicio.getMonth(), fechaInicio.getDate(), 0, 0, 0)) 
+      : null;
+    const finComparacion = fechaFin 
+      ? new Date(Date.UTC(finFecha.getFullYear(), finFecha.getMonth(), finFecha.getDate(), 23, 59, 59, 999)) 
+      : null;
+
+    const desdeOK = !inicioComparacion || fechaLog >= inicioComparacion;
+    const hastaOK = !finComparacion || fechaLog <= finComparacion;
+
+    const coincideTexto =
+      log.usuarioResponsable.toLowerCase().includes(textoBusqueda) ||
+      log.accion.toLowerCase().includes(textoBusqueda) ||
+      log.tablaAfectada.toLowerCase().includes(textoBusqueda) ||
+      log.detalle.toLowerCase().includes(textoBusqueda); 
+
+    return desdeOK && hastaOK && coincideTexto;
   });
 
   const logsOrdenados = logsFiltrados.sort((a, b) => {
@@ -65,9 +96,11 @@ export default function Auditoria() {
       const diff = new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
       return orden === 'asc' ? diff : -diff;
     }
+    const valA = a[columnaOrden] || '';
+    const valB = b[columnaOrden] || '';
     return orden === 'asc'
-      ? a[columnaOrden].localeCompare(b[columnaOrden])
-      : b[columnaOrden].localeCompare(a[columnaOrden]);
+      ? valA.localeCompare(valB)
+      : valB.localeCompare(valA);
   });
 
   const totalPaginas = Math.ceil(logsOrdenados.length / elementosPorPagina);
@@ -75,11 +108,19 @@ export default function Auditoria() {
   const paginados = logsOrdenados.slice(inicio, inicio + elementosPorPagina);
 
   const exportarExcel = () => {
-    const data = logsOrdenados.map(({ fecha, ...rest }) => ({
+    const dataParaExcel = logsOrdenados.map(({ fecha, ...rest }) => ({
       ...rest,
-      fecha: new Date(fecha).toLocaleString('es-ES'),
+      Fecha: new Date(fecha).toLocaleString('es-HN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }),
     }));
-    const ws = XLSX.utils.json_to_sheet(data);
+    const ws = XLSX.utils.json_to_sheet(dataParaExcel);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Auditoría');
     const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -95,8 +136,25 @@ export default function Auditoria() {
         l.accion,
         l.tablaAfectada,
         l.detalle,
-        new Date(l.fecha).toLocaleString('es-ES'),
+        new Date(l.fecha).toLocaleString('es-HN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }),
       ]),
+      startY: 20,
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 70 },
+        4: { cellWidth: 35 },
+      },
     });
     doc.save('Auditoria.pdf');
   };
@@ -106,17 +164,18 @@ export default function Auditoria() {
     setFechaInicio(null);
     setFechaFin(null);
     setPaginaActual(1);
+    obtenerLogs();
   };
 
   return (
     <div className="container mt-4">
-      <h2 className="mb-4">Auditoría</h2>
+      <h2 className="mb-4">Auditoría del Sistema</h2>
 
       <Row className="mb-3 align-items-center">
         <Col md={3}>
           <Form.Control
             type="text"
-            placeholder="Buscar por usuario, acción o entidad..."
+            placeholder="Buscar por usuario, acción, entidad o detalles..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
@@ -128,6 +187,7 @@ export default function Auditoria() {
             placeholderText="Desde fecha"
             className="form-control"
             dateFormat="dd/MM/yyyy"
+            isClearable
           />
         </Col>
         <Col md={2}>
@@ -137,6 +197,7 @@ export default function Auditoria() {
             placeholderText="Hasta fecha"
             className="form-control"
             dateFormat="dd/MM/yyyy"
+            isClearable
           />
         </Col>
         <Col md={1}>
@@ -145,6 +206,9 @@ export default function Auditoria() {
           </Button>
         </Col>
         <Col md={4} className="text-end">
+          <Button variant="info" className="me-2" onClick={obtenerLogs}>
+            🔁 Actualizar Logs
+          </Button>
           <Button variant="success" className="me-2" onClick={exportarExcel}>
             📥 Excel
           </Button>
@@ -154,11 +218,11 @@ export default function Auditoria() {
         </Col>
       </Row>
 
-      <Table striped bordered hover responsive>
+      <Table striped bordered hover responsive className="auditoria-table">
         <thead>
           <tr>
             <th onClick={() => manejarOrden('usuarioResponsable')} style={{ cursor: 'pointer' }}>
-              Usuario {columnaOrden === 'usuarioResponsable' ? (orden === 'asc' ? '▲' : '▼') : ''}
+              Usuario (login) {columnaOrden === 'usuarioResponsable' ? (orden === 'asc' ? '▲' : '▼') : ''}
             </th>
             <th onClick={() => manejarOrden('accion')} style={{ cursor: 'pointer' }}>
               Acción {columnaOrden === 'accion' ? (orden === 'asc' ? '▲' : '▼') : ''}
@@ -172,6 +236,7 @@ export default function Auditoria() {
             </th>
           </tr>
         </thead>
+
         <tbody>
           {paginados.map((log, idx) => (
             <tr key={idx}>
@@ -180,15 +245,23 @@ export default function Auditoria() {
               <td>{log.tablaAfectada}</td>
               <td>{log.detalle}</td>
               <td>
-                {new Date(log.fecha).toLocaleDateString('es-ES')}{' '}
-                {new Date(log.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(log.fecha).toLocaleDateString('es-HN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                })}{' '}
+                {new Date(log.fecha).toLocaleTimeString('es-HN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })}
               </td>
             </tr>
           ))}
           {paginados.length === 0 && (
             <tr>
-              <td colSpan={5} className="text-center text-muted">
-                No hay registros de auditoría.
+              <td colSpan={5} className="text-center text-muted py-3">
+                No hay registros de auditoría que coincidan con la búsqueda.
               </td>
             </tr>
           )}
@@ -196,7 +269,7 @@ export default function Auditoria() {
       </Table>
 
       {totalPaginas > 1 && (
-        <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex justify-content-between align-items-center mt-3">
           <span>
             Página {paginaActual} de {totalPaginas}
           </span>
